@@ -57,7 +57,7 @@ jobs:
         
       - name: Build and publish to Exchange
         run: >
-          mvn --batch-mode clean deploy
+          mvn --batch-mode -e clean deploy
           --settings common/.github/workflows/maven/settings.xml
           -DskipMunitTests
           -Dbusiness.group.id="${{ vars.BUSINESS_GROUP_ID }}"
