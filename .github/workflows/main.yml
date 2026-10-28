@@ -1,4 +1,3 @@
-```yaml
 name: Reusable Workflow To Deploy MuleSoft Application
 
 on:
@@ -113,4 +112,4 @@ jobs:
            -Dplatform.client.secret="${{ secrets.ENV_CLIENT_SECRET }}" \
            -Dmule.key="${{ secrets.ENCRYPTION_KEY }}" \
            -Denv="${{ secrets.MULE_ENV }}"
-```
+
