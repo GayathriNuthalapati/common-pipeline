@@ -47,7 +47,7 @@ jobs:
       - name: Build and publish to Exchange
         run: >
           mvn --batch-mode clean deploy
-          --settings common/maven/settings.xml
+          --settings GayathriNuthalapati/common-pipeline/.github/workflows/maven/settings.xml
           -DskipMunitTests
           -Dbusiness.group.id="${{ vars.BUSINESS_GROUP_ID }}"
         env:
@@ -103,7 +103,7 @@ jobs:
         run: |
           artifactName=$(ls *.jar | head -1)
           mvn --batch-mode mule:deploy \
-           --settings common/maven/settings.xml \
+           --settings GayathriNuthalapati/common-pipeline/.github/workflows/maven/settings.xml \
            -Dmule.artifact="$artifactName" \
            -Dbusiness.group.id="${{ secrets.BUSINESS_GROUP_ID }}" \
            -Dca.client.id="${{ secrets.CA_CLIENT_ID }}" \
