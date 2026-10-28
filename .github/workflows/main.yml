@@ -42,7 +42,12 @@ jobs:
           distribution: zulu
           java-version: ${{ inputs.java-version }}
           cache: maven
-
+          
+      - name: Check Maven and Java versions
+        run: |
+          mvn --version
+          java -version
+          
       - name: Build and publish to Exchange
         run: >
           mvn --batch-mode clean deploy
