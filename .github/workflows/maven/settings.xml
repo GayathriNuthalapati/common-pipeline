@@ -5,7 +5,7 @@
 <server>
 <id>anypoint-exchange-v3</id>
 <username>~~~Client~~~</username>
-<password>${env.CA_CLIENT_ID}~?~${env.CA_CLIENT_SECRET}</password>
+<password>ab75c22ddf4a41568bcf0cd22dda92ad~?~CECb82c8356A47Ae89Eab27045BEf57F</password>
 </server>
 </servers>
  
