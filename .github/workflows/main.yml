@@ -1,4 +1,3 @@
-```yaml
 name: Reusable Workflow To Deploy MuleSoft Application
 
 on:
@@ -157,4 +156,4 @@ jobs:
             -Dmule.key="$ENCRYPTION_KEY" \
             -Denv="$MULE_ENV" \
             -Dapplication.name="$APP_NAME"
-```
+
