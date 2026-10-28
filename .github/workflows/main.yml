@@ -33,7 +33,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: GayathriNuthalapati/common-pipeline
-          ref: ${{ inputs.common-ref }}
           path: common
           token: ${{ secrets.COMMON_REPO_TOKEN || github.token }}
  
@@ -80,7 +79,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: GayathriNuthalapati/common-pipeline
-          ref: ${{ inputs.common-ref }}
           path: common
           token: ${{ secrets.COMMON_REPO_TOKEN || github.token }}
  
