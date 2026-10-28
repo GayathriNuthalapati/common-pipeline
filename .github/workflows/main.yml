@@ -1,22 +1,20 @@
+```yaml
 name: Reusable Workflow To Deploy MuleSoft Application
 
 on:
   workflow_call:
     inputs:
       environment:
-        description: GitHub environment whose secrets and variables supply the values
+        description: GitHub environment whose secrets and variables supply the values (dev by default)
         type: string
         required: false
         default: dev
-
       common-ref:
         description: Branch or tag of common-pipeline to take maven/settings.xml from
         type: string
         required: false
         default: main
-
       java-version:
-        description: Java version
         type: string
         required: false
         default: '17'
@@ -26,26 +24,18 @@ permissions:
 
 jobs:
   build:
-    name: Build and Publish MuleSoft Application
     runs-on: ubuntu-latest
-
-    environment: ${{ inputs.environment }}
-
     steps:
-      - name: Checkout application repository
+      - name: Checkout this repo
         uses: actions/checkout@v4
 
-      - name: Checkout common-pipeline
+      - name: Checkout common-pipeline (for maven/settings.xml)
         uses: actions/checkout@v4
         with:
-          repository: GayathriNuthalapati/common-pipeline
+          repository: ${{ github.repository_owner }}/common-pipeline
           ref: ${{ inputs.common-ref }}
           path: common
           token: ${{ secrets.COMMON_REPO_TOKEN || github.token }}
-
-      - name: Verify Maven settings
-        run: |
-          ls -l common/.github/workflows/maven/settings.xml
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -55,32 +45,20 @@ jobs:
           cache: maven
 
       - name: Build and publish to Exchange
-        run: |
-          mvn --version
-          mvn --batch-mode -e clean deploy \
-            --settings common/.github/workflows/maven/settings.xml \
-            -DskipMunitTests \
-            -Dbusiness.group.id="${{ vars.BUSINESS_GROUP_ID }}"
+        run: >
+          mvn --batch-mode clean deploy
+          --settings common/.github/workflows/maven/settings.xml
+          -DskipMunitTests
+          -Dbusiness.group.id="${{ vars.BUSINESS_GROUP_ID }}"
         env:
           CA_CLIENT_ID: ${{ secrets.CA_CLIENT_ID }}
           CA_CLIENT_SECRET: ${{ secrets.CA_CLIENT_SECRET }}
 
       - name: Stamp artifact file name with commit hash
         run: |
-          artifactName1=$(find target -maxdepth 1 -name '*.jar' ! -name '*-*.jar' | head -1)
-
-          if [ -z "$artifactName1" ]; then
-            artifactName1=$(find target -maxdepth 1 -name '*.jar' | head -1)
-          fi
-
-          if [ -z "$artifactName1" ]; then
-            echo "No JAR artifact found in target/"
-            exit 1
-          fi
-
+          artifactName1=$(ls target/*.jar | head -1)
           commitHash=$(git rev-parse --short "$GITHUB_SHA")
-          artifactName2="${artifactName1%.jar}-${commitHash}.jar"
-
+          artifactName2=$(echo "$artifactName1" | sed "s/\.jar$/-$commitHash.jar/")
           mv "$artifactName1" "$artifactName2"
 
       - name: Upload artifact
@@ -88,30 +66,23 @@ jobs:
         with:
           name: artifacts
           path: target/*.jar
-          if-no-files-found: error
 
   deploy:
     name: Deploy to ${{ vars.ANYPOINT_ENVIRONMENT || inputs.environment }}
     needs: build
     runs-on: ubuntu-latest
-
-    environment: ${{ inputs.environment }}
-
+    environment: ${{ vars.ANYPOINT_ENVIRONMENT }}
     steps:
-      - name: Checkout application repository
+      - name: Checkout this repo
         uses: actions/checkout@v4
 
-      - name: Checkout common-pipeline
+      - name: Checkout common-pipeline (for maven/settings.xml)
         uses: actions/checkout@v4
         with:
-          repository: GayathriNuthalapati/common-pipeline
+          repository: ${{ github.repository_owner }}/common-pipeline
           ref: ${{ inputs.common-ref }}
           path: common
           token: ${{ secrets.COMMON_REPO_TOKEN || github.token }}
-
-      - name: Verify Maven settings
-        run: |
-          ls -l common/.github/workflows/maven/settings.xml
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -124,37 +95,22 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: artifacts
-          path: artifacts
 
-      - name: Deploy to Anypoint Platform
+      - name: Deploy to ${{ vars.ANYPOINT_ENVIRONMENT || inputs.environment }}
         env:
           CA_CLIENT_ID: ${{ secrets.CA_CLIENT_ID }}
           CA_CLIENT_SECRET: ${{ secrets.CA_CLIENT_SECRET }}
-          BUSINESS_GROUP_ID: ${{ vars.BUSINESS_GROUP_ID }}
-          ANYPOINT_ENVIRONMENT: ${{ secrets.ANYPOINT_ENVIRONMENT }}
-          ENV_CLIENT_ID: ${{ secrets.ENV_CLIENT_ID }}
-          ENV_CLIENT_SECRET: ${{ secrets.ENV_CLIENT_SECRET }}
-          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
-          MULE_ENV: ${{ secrets.MULE_ENV }}
-          APP_NAME: ${{ secrets.APP_NAME }}
         run: |
-          artifactName=$(find artifacts -maxdepth 1 -name '*.jar' | head -1)
-
-          if [ -z "$artifactName" ]; then
-            echo "No downloaded JAR artifact found"
-            exit 1
-          fi
-
+          artifactName=$(ls *.jar | head -1)
           mvn --batch-mode mule:deploy \
-            --settings common/.github/workflows/maven/settings.xml \
-            -Dmule.artifact="$artifactName" \
-            -Dbusiness.group.id="$BUSINESS_GROUP_ID" \
-            -Dca.client.id="$CA_CLIENT_ID" \
-            -Dca.client.secret="$CA_CLIENT_SECRET" \
-            -Dch.environment="$ANYPOINT_ENVIRONMENT" \
-            -Dplatform.client.id="$ENV_CLIENT_ID" \
-            -Dplatform.client.secret="$ENV_CLIENT_SECRET" \
-            -Dmule.key="$ENCRYPTION_KEY" \
-            -Denv="$MULE_ENV" \
-            -Dapplication.name="$APP_NAME"
-
+           --settings common/.github/workflows/maven/settings.xml \
+           -Dmule.artifact="$artifactName" \
+           -Dbusiness.group.id="${{ vars.BUSINESS_GROUP_ID }}" \
+           -Dca.client.id="${{ secrets.CA_CLIENT_ID }}" \
+           -Dca.client.secret="${{ secrets.CA_CLIENT_SECRET }}" \
+           -Dch.environment="${{ secrets.ANYPOINT_ENVIRONMENT }}" \
+           -Dplatform.client.id="${{ secrets.ENV_CLIENT_ID }}" \
+           -Dplatform.client.secret="${{ secrets.ENV_CLIENT_SECRET }}" \
+           -Dmule.key="${{ secrets.ENCRYPTION_KEY }}" \
+           -Denv="${{ secrets.MULE_ENV }}"
+```
