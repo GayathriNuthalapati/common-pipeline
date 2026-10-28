@@ -47,7 +47,14 @@ jobs:
         run: |
           mvn --version
           java -version
-          
+      - name: Set up Maven 3.9.9
+        uses: stCarolas/setup-maven@v5
+        with:
+          maven-version: 3.9.9
+      
+      - name: Verify Maven version
+        run: mvn --version
+        
       - name: Build and publish to Exchange
         run: >
           mvn --batch-mode clean deploy
